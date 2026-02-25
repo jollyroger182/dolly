@@ -1,0 +1,32 @@
+{
+  "display_information": {
+    "name": "dolly (dev)"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "dolly (dev)",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/dev-dolly",
+        "description": "Launch a poll",
+        "usage_hint": "[question]",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": ["chat:write", "channels:join", "channels:read", "commands"]
+    }
+  },
+  "settings": {
+    "interactivity": {
+      "is_enabled": true
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
+  }
+}
