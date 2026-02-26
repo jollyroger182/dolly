@@ -1,10 +1,10 @@
 import app from './src/slack'
 
-console.log('dolly is starting...')
+import './src/registry/actions'
+import './src/registry/commands'
+import './src/registry/shortcuts'
 
-app.command(/^\/.*dolly$/, async ({ ack }) => {
-  await ack('hello world')
-})
+console.log('dolly is starting...')
 
 await app.start()
 

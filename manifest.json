@@ -7,6 +7,14 @@
       "display_name": "dolly (dev)",
       "always_online": true
     },
+    "shortcuts": [
+      {
+        "name": "Create a poll",
+        "type": "global",
+        "callback_id": "create_poll",
+        "description": "Sends a poll in a channel"
+      }
+    ],
     "slash_commands": [
       {
         "command": "/dev-dolly",
@@ -18,7 +26,16 @@
   },
   "oauth_config": {
     "scopes": {
-      "bot": ["chat:write", "channels:join", "channels:read", "commands"]
+      "bot": [
+        "channels:join",
+        "channels:read",
+        "chat:write",
+        "commands",
+        "reactions:read",
+        "reactions:write",
+        "groups:read",
+        "mpim:read"
+      ]
     }
   },
   "settings": {
