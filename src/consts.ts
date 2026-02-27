@@ -11,4 +11,8 @@ export const BLOCK_ID = {
   channel: 'channel',
 }
 
+export const ACTION_ID = {
+  pollChoiceButton: 'poll_choice_button',
+}
+
 export const VALUE_ACTION = 'value'

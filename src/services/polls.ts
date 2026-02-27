@@ -4,6 +4,14 @@ export interface PollWithChoices extends DB.Poll {
   choices: DB.PollChoice[]
 }
 
+export interface PollWithResponses extends PollWithChoices {
+  responses: PollResponseWithAnswers[]
+}
+
+export interface PollResponseWithAnswers extends DB.PollResponse {
+  answers: DB.PollResponseAnswer[]
+}
+
 interface CreatePoll {
   user: string
   question: string
@@ -11,7 +19,11 @@ interface CreatePoll {
 }
 
 const Polls = {
-  async create({ user, question, choices }: CreatePoll) {
+  async create({
+    user,
+    question,
+    choices,
+  }: CreatePoll): Promise<PollWithChoices> {
     return {
       ...(await sql.begin(async (sql) => {
         const newPoll: Partial<DB.Poll> = { creator_user_id: user, question }

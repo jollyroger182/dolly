@@ -3,6 +3,7 @@ import type { KnownBlock } from '@slack/web-api'
 import app from '../slack'
 import type { RespondFn } from '@slack/bolt'
 import Polls from '../services/polls'
+import { generatePollBlocks } from '../blocks/poll'
 
 interface CreatePollArguments {
   trigger_id: string
@@ -88,5 +89,7 @@ export async function handleConfirmCreatePoll({
 
   const poll = await Polls.create({ user, question, choices })
 
-  await respond('Poll created!')
+  const blocks = await generatePollBlocks({ ...poll, responses: [] })
+
+  await respond({ blocks, response_type: 'in_channel' })
 }
