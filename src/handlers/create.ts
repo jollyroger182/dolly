@@ -1,6 +1,8 @@
-import { CALLBACK_ID } from '../consts'
+import { BLOCK_ID, CALLBACK_ID, VALUE_ACTION } from '../consts'
 import type { KnownBlock } from '@slack/web-api'
 import app from '../slack'
+import type { RespondFn } from '@slack/bolt'
+import Polls from '../services/polls'
 
 interface CreatePollArguments {
   trigger_id: string
@@ -24,7 +26,7 @@ export async function handleCreatePoll({
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: '*Dolly is not in this channel!* This means that features are limited. Be warned!',
+          text: '*Dolly is not in this channel!* This means that some features may not work as intended.',
         },
       })
     }
@@ -44,22 +46,47 @@ export async function handleCreatePoll({
         ...hintBlocks,
         {
           type: 'input',
+          block_id: BLOCK_ID.question,
           label: { type: 'plain_text', text: 'Question' },
           element: {
             type: 'plain_text_input',
+            action_id: VALUE_ACTION,
             initial_value: text,
           },
         },
         {
           type: 'input',
+          block_id: BLOCK_ID.channel,
           label: { type: 'plain_text', text: 'Channel to send the poll' },
           element: {
             type: 'conversations_select',
+            action_id: VALUE_ACTION,
             initial_conversation,
             default_to_current_conversation: true,
+            response_url_enabled: true,
           },
         },
       ],
     },
   })
+}
+
+interface ConfirmCreatePollOptions {
+  respond: RespondFn
+  user: string
+  question: string
+  choices: string[]
+}
+
+export async function handleConfirmCreatePoll({
+  respond,
+  user,
+  question,
+  choices,
+}: ConfirmCreatePollOptions) {
+  console.log('create', question)
+
+  const poll = await Polls.create({ user, question, choices })
+
+  await respond('Poll created!')
 }

@@ -24,11 +24,11 @@ CREATE TABLE poll_choices (
     text TEXT NOT NULL,
     position INTEGER NOT NULL,
 
-    UNIQUE (id, poll_id),
-    UNIQUE (poll_id, position)
+    UNIQUE (id, poll_id)
 );
 
 CREATE INDEX poll_choices_poll ON poll_choices (poll_id);
+CREATE UNIQUE INDEX poll_choices_poll_position ON poll_choices (poll_id, position);
 
 
 CREATE TABLE poll_responses (

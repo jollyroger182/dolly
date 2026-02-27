@@ -27,14 +27,16 @@
   "oauth_config": {
     "scopes": {
       "bot": [
+        "users.profile:read",
         "channels:join",
         "channels:read",
         "chat:write",
         "commands",
+        "groups:read",
+        "mpim:read",
         "reactions:read",
         "reactions:write",
-        "groups:read",
-        "mpim:read"
+        "users:read"
       ]
     }
   },
