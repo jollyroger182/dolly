@@ -9,13 +9,26 @@ interface CreatePollArguments {
   trigger_id: string
   initial_conversation?: string
   text?: string
+  options?: string
+  error?: string
 }
 
 export async function handleCreatePoll({
   trigger_id,
   initial_conversation,
   text,
+  options,
+  error,
 }: CreatePollArguments) {
+  const errorBlocks: KnownBlock[] = error
+    ? [
+        {
+          type: 'section',
+          text: { type: 'mrkdwn', text: `*Error:* ${error}` },
+        },
+      ]
+    : []
+
   const hintBlocks: KnownBlock[] = []
   if (initial_conversation) {
     try {
@@ -44,6 +57,7 @@ export async function handleCreatePoll({
       submit: { type: 'plain_text', text: 'Create' },
 
       blocks: [
+        ...errorBlocks,
         ...hintBlocks,
         {
           type: 'input',
@@ -65,6 +79,17 @@ export async function handleCreatePoll({
             initial_conversation,
             default_to_current_conversation: true,
             response_url_enabled: true,
+          },
+        },
+        {
+          type: 'input',
+          block_id: BLOCK_ID.options,
+          label: { type: 'plain_text', text: 'Options (one on each line)' },
+          element: {
+            type: 'plain_text_input',
+            action_id: VALUE_ACTION,
+            multiline: true,
+            initial_value: options,
           },
         },
       ],

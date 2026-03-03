@@ -9,6 +9,7 @@ export const CALLBACK_ID = {
 export const BLOCK_ID = {
   question: 'question',
   channel: 'channel',
+  options: 'options',
 }
 
 export const ACTION_ID = {

@@ -1,6 +1,6 @@
 import { generatePollBlocks } from '../blocks/poll'
 import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE_ACTION } from '../consts'
-import { handleConfirmCreatePoll } from '../handlers/create'
+import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
 import Polls from '../services/polls'
 import Responses from '../services/responses'
 import app from '../slack'
@@ -8,12 +8,31 @@ import app from '../slack'
 app.view(
   CALLBACK_ID.createPollModal,
   async ({ ack, respond, payload, body }) => {
+    if (body.type !== 'view_submission') return
+
     await ack()
 
+    const conversation =
+      payload.state.values[BLOCK_ID.channel]![VALUE_ACTION]!
+        .selected_conversation!
     const question =
       payload.state.values[BLOCK_ID.question]![VALUE_ACTION]!.value!
+    const choices = payload.state.values[BLOCK_ID.options]![
+      VALUE_ACTION
+    ]!.value!.trim()
+      .split('\n')
+      .filter((c) => c)
 
-    const choices = ['Option 1', 'Option 2', 'option 3']
+    if (choices.length < 2) {
+      await handleCreatePoll({
+        trigger_id: body.trigger_id,
+        initial_conversation: conversation,
+        text: question,
+        options: choices.join('\n'),
+        error: "What's a poll without two or more choices?",
+      })
+      return
+    }
 
     await handleConfirmCreatePoll({
       respond,
