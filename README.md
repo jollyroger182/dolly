@@ -1,15 +1,13 @@
 # dolly
 
-To install dependencies:
+A simple Slack poll bot.
 
-```bash
-bun install
-```
+## Usage
 
-To run:
+Use the `/dolly` command to see instructions or create a poll. The `Create a poll` global shortcut is also available.
 
-```bash
-bun run index.ts
-```
+## Selfhosting setup
 
-This project was created using `bun init` in bun v1.3.6. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+1. Create a Slack app with the manifest in [`manifest.json`](./manifest.json), making sure to add your own prefix to commands.
+2. Create an `.env` file with the sample values in [`.env.example`](./.env.example).
+3. Run the bot with `bun dev`.
