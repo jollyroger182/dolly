@@ -1,5 +1,5 @@
 import { generatePollBlocks } from '../blocks/poll'
-import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE_ACTION } from '../consts'
+import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
 import Polls from '../services/polls'
 import Responses from '../services/responses'
@@ -13,12 +13,12 @@ app.view(
     await ack()
 
     const conversation =
-      payload.state.values[BLOCK_ID.channel]![VALUE_ACTION]!
+      payload.state.values[BLOCK_ID.channel]![ACTION_ID.value]!
         .selected_conversation!
     const question =
-      payload.state.values[BLOCK_ID.question]![VALUE_ACTION]!.value!
+      payload.state.values[BLOCK_ID.question]![ACTION_ID.value]!.value!
     const choices = payload.state.values[BLOCK_ID.options]![
-      VALUE_ACTION
+      ACTION_ID.value
     ]!.value!.trim()
       .split('\n')
       .filter((c) => c)

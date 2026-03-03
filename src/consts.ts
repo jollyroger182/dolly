@@ -13,8 +13,7 @@ export const BLOCK_ID = {
 }
 
 export const ACTION_ID = {
+  value: 'value',
   pollChoiceButton: 'poll_choice_button',
   pollChoiceMenu: 'poll_choice_menu',
 }
-
-export const VALUE_ACTION = 'value'

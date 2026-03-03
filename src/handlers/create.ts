@@ -1,4 +1,4 @@
-import { BLOCK_ID, CALLBACK_ID, VALUE_ACTION } from '../consts'
+import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
 import type { KnownBlock } from '@slack/web-api'
 import app from '../slack'
 import type { RespondFn } from '@slack/bolt'
@@ -65,7 +65,7 @@ export async function handleCreatePoll({
           label: { type: 'plain_text', text: 'Question' },
           element: {
             type: 'plain_text_input',
-            action_id: VALUE_ACTION,
+            action_id: ACTION_ID.value,
             initial_value: text,
           },
         },
@@ -75,7 +75,7 @@ export async function handleCreatePoll({
           label: { type: 'plain_text', text: 'Channel to send the poll' },
           element: {
             type: 'conversations_select',
-            action_id: VALUE_ACTION,
+            action_id: ACTION_ID.value,
             initial_conversation,
             default_to_current_conversation: true,
             response_url_enabled: true,
@@ -87,7 +87,7 @@ export async function handleCreatePoll({
           label: { type: 'plain_text', text: 'Options (one on each line)' },
           element: {
             type: 'plain_text_input',
-            action_id: VALUE_ACTION,
+            action_id: ACTION_ID.value,
             multiline: true,
             initial_value: options,
           },
