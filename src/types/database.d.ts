@@ -29,3 +29,15 @@ namespace DB {
     choice_id: number
   }
 }
+
+interface PollWithChoices extends DB.Poll {
+  choices: DB.PollChoice[]
+}
+
+interface PollWithResponses extends PollWithChoices {
+  responses: PollResponseWithAnswers[]
+}
+
+interface PollResponseWithAnswers extends DB.PollResponse {
+  answers: DB.PollResponseAnswer[]
+}

@@ -1,9 +1,5 @@
 import type {
-  PollResponseWithAnswers,
-  PollWithChoices,
-  PollWithResponses,
-} from '../services/polls'
-import type {
+  PlainTextOption,
   ContextBlockElement,
   KnownBlock,
   RichTextBlock,
@@ -17,29 +13,6 @@ import { generateProgressBar } from './progress'
 export async function generatePollBlocks(
   poll: PollWithResponses,
 ): Promise<KnownBlock[]> {
-  console.log(poll)
-
-  let pfp: string | undefined
-  try {
-    const user = await app.client.users.info({ user: poll.creator_user_id })
-    pfp = user.user?.profile?.image_original || user.user?.profile?.image_512
-  } catch (e) {
-    console.error(
-      `fetching user ${poll.creator_user_id} for poll ${poll.id} failed`,
-      e,
-    )
-  }
-
-  const pfpElements: ContextBlockElement[] = pfp
-    ? [
-        {
-          type: 'image',
-          image_url: pfp,
-          alt_text: `Profile picture`,
-        },
-      ]
-    : []
-
   const editedElements: ContextBlockElement[] =
     poll.created_at.getTime() !== poll.updated_at.getTime()
       ? [
@@ -55,21 +28,32 @@ export async function generatePollBlocks(
       type: 'section',
       text: { type: 'mrkdwn', text: `*${poll.question}*` },
     },
+    { type: 'divider' },
+    await generatePollChoiceBlock(poll.choices, poll.responses),
     {
       type: 'actions',
-      elements: poll.choices.map((choice) => ({
-        type: 'button',
-        text: { type: 'plain_text', text: choice.text },
-        action_id: `${ACTION_ID.pollChoiceButton}_${randomUUIDv7()}`,
-        value: `${choice.id}`,
-      })),
+      elements: [
+        {
+          type: 'static_select',
+          action_id: ACTION_ID.pollChoiceMenu,
+          placeholder: { type: 'plain_text', text: 'Choose your answer' },
+          options: [
+            {
+              text: { type: 'plain_text', text: 'Clear answers' },
+              value: JSON.stringify({ poll: poll.id, choice: -1 }),
+            },
+            ...poll.choices.map<PlainTextOption>((choice) => ({
+              text: { type: 'plain_text', text: choice.text },
+              value: JSON.stringify({ poll: poll.id, choice: choice.id }),
+            })),
+          ],
+        },
+      ],
     },
-    await generatePollChoiceBlock(poll.choices, poll.responses),
     {
       type: 'context',
       elements: [
-        { type: 'mrkdwn', text: `By <@${poll.creator_user_id}>` },
-        // ...pfpElements,
+        { type: 'mrkdwn', text: `Asked by <@${poll.creator_user_id}>` },
         ...editedElements,
       ],
     },

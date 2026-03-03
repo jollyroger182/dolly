@@ -56,6 +56,7 @@ CREATE TABLE poll_response_answers (
     FOREIGN KEY (choice_id, poll_id) REFERENCES poll_choices(id, poll_id) ON DELETE CASCADE
 );
 
+CREATE INDEX poll_response_answers_poll ON poll_response_answers (poll_id);
 CREATE INDEX poll_response_answers_response ON poll_response_answers (response_id);
 CREATE INDEX poll_response_answers_choice ON poll_response_answers (choice_id);
 

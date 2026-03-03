@@ -1,16 +1,5 @@
 import { sql } from 'bun'
-
-export interface PollWithChoices extends DB.Poll {
-  choices: DB.PollChoice[]
-}
-
-export interface PollWithResponses extends PollWithChoices {
-  responses: PollResponseWithAnswers[]
-}
-
-export interface PollResponseWithAnswers extends DB.PollResponse {
-  answers: DB.PollResponseAnswer[]
-}
+import Responses from './responses'
 
 interface CreatePoll {
   user: string
@@ -45,6 +34,23 @@ const Polls = {
         return { ...poll, choices: pollChoices }
       })),
     }
+  },
+  async fetch(id: number): Promise<DB.Poll | undefined> {
+    return (await sql<DB.Poll[]>`SELECT * FROM polls WHERE id = ${id}`)[0]
+  },
+  async fetchWithChoices(id: number): Promise<PollWithChoices | undefined> {
+    const poll = await Polls.fetch(id)
+    if (!poll) return
+    const choices = await sql<
+      DB.PollChoice[]
+    >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+    return { ...poll, choices }
+  },
+  async fetchWithResponses(id: number): Promise<PollWithResponses | undefined> {
+    const poll = await Polls.fetchWithChoices(id)
+    if (!poll) return
+    const responses = await Responses.fetchByPollWithAnswers(id)
+    return { ...poll, responses }
   },
 }
 
