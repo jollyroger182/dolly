@@ -1,8 +1,6 @@
-import { generatePollBlocks } from '../blocks/poll'
 import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
+import { handleAnswerPoll } from '../handlers/answer'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
-import Polls from '../services/polls'
-import Responses from '../services/responses'
 import app from '../slack'
 
 app.view(
@@ -57,24 +55,11 @@ app.action(
       choice: number
     }
 
-    if (choiceId === -1) {
-      await Responses.deleteByUser({
-        poll: pollId,
-        user: body.user.id,
-      })
-    } else {
-      await Responses.createOrReplace({
-        poll: pollId,
-        user: body.user.id,
-        choices: [choiceId],
-      })
-    }
-
-    const poll = (await Polls.fetchWithResponses(pollId))!
-
-    await respond({
-      replace_original: true,
-      blocks: await generatePollBlocks(poll),
+    await handleAnswerPoll({
+      respond,
+      poll: pollId,
+      user: body.user.id,
+      choices: choiceId >= 0 ? [choiceId] : null,
     })
   },
 )
