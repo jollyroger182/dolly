@@ -106,6 +106,7 @@ export async function handleCreatePoll({
               },
             ],
           },
+          optional: true,
         },
       ],
     },
