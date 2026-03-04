@@ -1,4 +1,4 @@
-import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
+import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE } from '../consts'
 import type { KnownBlock } from '@slack/web-api'
 import app from '../slack'
 import type { RespondFn } from '@slack/bolt'
@@ -92,6 +92,21 @@ export async function handleCreatePoll({
             initial_value: options,
           },
         },
+        {
+          type: 'input',
+          block_id: BLOCK_ID.settings,
+          label: { type: 'plain_text', text: 'Options' },
+          element: {
+            type: 'checkboxes',
+            action_id: ACTION_ID.value,
+            options: [
+              {
+                text: { type: 'plain_text', text: 'Anonymous poll' },
+                value: VALUE.anonymous,
+              },
+            ],
+          },
+        },
       ],
     },
   })
@@ -102,6 +117,7 @@ interface ConfirmCreatePollOptions {
   user: string
   question: string
   choices: string[]
+  anonymous: boolean
 }
 
 export async function handleConfirmCreatePoll({
@@ -109,10 +125,11 @@ export async function handleConfirmCreatePoll({
   user,
   question,
   choices,
+  anonymous,
 }: ConfirmCreatePollOptions) {
   console.log('create', question)
 
-  const poll = await Polls.create({ user, question, choices })
+  const poll = await Polls.create({ user, question, choices, anonymous })
 
   const blocks = await generatePollBlocks({ ...poll, responses: [] })
 

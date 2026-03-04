@@ -23,13 +23,17 @@ export async function generatePollBlocks(
         ]
       : []
 
+  const anonymousElements: ContextBlockElement[] = poll.anonymous
+    ? [{ type: 'plain_text', text: 'Anonymous poll' }]
+    : []
+
   return [
     {
       type: 'section',
       text: { type: 'mrkdwn', text: `*${poll.question}*` },
     },
     { type: 'divider' },
-    await generatePollChoiceBlock(poll.choices, poll.responses),
+    await generatePollChoiceBlock(poll.choices, poll.responses, poll),
     {
       type: 'actions',
       elements: [
@@ -54,6 +58,7 @@ export async function generatePollBlocks(
       type: 'context',
       elements: [
         { type: 'mrkdwn', text: `Asked by <@${poll.creator_user_id}>` },
+        ...anonymousElements,
         ...editedElements,
       ],
     },
@@ -63,6 +68,7 @@ export async function generatePollBlocks(
 export async function generatePollChoiceBlock(
   choices: DB.PollChoice[],
   responses: PollResponseWithAnswers[],
+  { anonymous }: { anonymous: boolean },
 ) {
   const counter = new Map<number, string[]>()
   let total = 0
@@ -86,7 +92,7 @@ export async function generatePollChoiceBlock(
     )
 
     const users = counter.get(choice.id)!
-    if (users.length) {
+    if (users.length && !anonymous) {
       for (const [index, item] of users.entries()) {
         elements.push({ type: 'user', user_id: item })
         elements.push({

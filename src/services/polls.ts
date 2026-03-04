@@ -5,6 +5,7 @@ interface CreatePoll {
   user: string
   question: string
   choices: string[]
+  anonymous: boolean
 }
 
 const Polls = {
@@ -12,10 +13,15 @@ const Polls = {
     user,
     question,
     choices,
+    anonymous,
   }: CreatePoll): Promise<PollWithChoices> {
     return {
       ...(await sql.begin(async (sql) => {
-        const newPoll: Partial<DB.Poll> = { creator_user_id: user, question }
+        const newPoll: Partial<DB.Poll> = {
+          creator_user_id: user,
+          question,
+          anonymous,
+        }
         const [poll] = await sql<
           [DB.Poll]
         >`INSERT INTO polls ${sql(newPoll)} RETURNING *`

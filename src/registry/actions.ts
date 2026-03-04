@@ -1,4 +1,4 @@
-import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
+import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE } from '../consts'
 import { handleAnswerPoll } from '../handlers/answer'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
 import app from '../slack'
@@ -20,6 +20,11 @@ app.view(
     ]!.value!.trim()
       .split('\n')
       .filter((c) => c)
+    const settings = payload.state.values[BLOCK_ID.settings]![
+      ACTION_ID.value
+    ]!.selected_options!.map((o) => o.value)
+
+    const anonymous = settings.includes(VALUE.anonymous)
 
     if (choices.length < 2) {
       await handleCreatePoll({
@@ -37,6 +42,7 @@ app.view(
       user: body.user.id,
       question,
       choices,
+      anonymous,
     })
   },
 )
