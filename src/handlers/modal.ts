@@ -49,6 +49,23 @@ export async function handlePollModal({
     }
   }
 
+  const channelBlocks: KnownBlock[] = edit
+    ? []
+    : [
+        {
+          type: 'input',
+          block_id: BLOCK_ID.channel,
+          label: { type: 'plain_text', text: 'Channel to send the poll' },
+          element: {
+            type: 'conversations_select',
+            action_id: ACTION_ID.value,
+            initial_conversation,
+            default_to_current_conversation: true,
+            response_url_enabled: true,
+          },
+        },
+      ]
+
   const settingsBlocks: KnownBlock[] = edit
     ? []
     : [
@@ -94,18 +111,7 @@ export async function handlePollModal({
             initial_value: text,
           },
         },
-        {
-          type: 'input',
-          block_id: BLOCK_ID.channel,
-          label: { type: 'plain_text', text: 'Channel to send the poll' },
-          element: {
-            type: 'conversations_select',
-            action_id: ACTION_ID.value,
-            initial_conversation,
-            default_to_current_conversation: true,
-            response_url_enabled: true,
-          },
-        },
+        ...channelBlocks,
         {
           type: 'input',
           block_id: BLOCK_ID.options,
