@@ -19,3 +19,7 @@ export async function showErrorModal({ trigger_id, error }: ShowErrorModal) {
     },
   })
 }
+
+export function unique<T>(array: T[]): T[] {
+  return Array.from(new Set(array))
+}

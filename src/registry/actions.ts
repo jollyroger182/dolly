@@ -12,7 +12,7 @@ import {
   handleConfirmEditPoll,
   handleEditPoll,
 } from '../handlers/edit'
-import { showErrorModal } from '../utils'
+import { showErrorModal, unique } from '../utils'
 
 const responseUrlCache = new Cache<string, string>()
 
@@ -28,11 +28,11 @@ app.view(
         .selected_conversation!
     const question =
       payload.state.values[BLOCK_ID.question]![ACTION_ID.value]!.value!
-    const choices = payload.state.values[BLOCK_ID.options]![
-      ACTION_ID.value
-    ]!.value!.trim()
-      .split('\n')
-      .filter((c) => c)
+    const choices = unique(
+      payload.state.values[BLOCK_ID.options]![ACTION_ID.value]!.value!.trim()
+        .split('\n')
+        .filter((c) => c),
+    )
     const settings = payload.state.values[BLOCK_ID.settings]![
       ACTION_ID.value
     ]!.selected_options!.map((o) => o.value)
@@ -134,11 +134,11 @@ app.view(
 
     const question =
       payload.state.values[BLOCK_ID.question]![ACTION_ID.value]!.value!
-    const choices = payload.state.values[BLOCK_ID.options]![
-      ACTION_ID.value
-    ]!.value!.trim()
-      .split('\n')
-      .filter((c) => c)
+    const choices = unique(
+      payload.state.values[BLOCK_ID.options]![ACTION_ID.value]!.value!.trim()
+        .split('\n')
+        .filter((c) => c),
+    )
 
     await handleConfirmEditPoll({
       private_metadata: payload.private_metadata,
