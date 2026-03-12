@@ -32,23 +32,6 @@ export async function handlePollModal({
       ]
     : []
 
-  const hintBlocks: KnownBlock[] = []
-  if (initial_conversation) {
-    try {
-      await app.client.conversations.info({
-        channel: initial_conversation,
-      })
-    } catch {
-      hintBlocks.push({
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: '*Dolly is not in this channel!* This means that some features may not work as intended.',
-        },
-      })
-    }
-  }
-
   const channelBlocks: KnownBlock[] = edit
     ? []
     : [
@@ -100,7 +83,6 @@ export async function handlePollModal({
 
       blocks: [
         ...errorBlocks,
-        ...hintBlocks,
         {
           type: 'input',
           block_id: BLOCK_ID.question,
