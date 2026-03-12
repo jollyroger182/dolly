@@ -12,6 +12,7 @@ import {
   handleConfirmEditPoll,
   handleEditPoll,
 } from '../handlers/edit'
+import { showErrorModal } from '../utils'
 
 const responseUrlCache = new Cache<string, string>()
 
@@ -103,12 +104,16 @@ app.action(
     if (!poll) return
 
     if (poll.creator_user_id !== body.user.id) {
-      // for some reason this doesn't work smh so just fail silently
+      // for some reason this doesn't work smh
       // await respond({
       //   text: "You cannot edit another user's poll.",
       //   replace_original: false,
       //   response_type: 'ephemeral',
       // })
+      await showErrorModal({
+        trigger_id: body.trigger_id,
+        error: "You cannot edit another user's poll.",
+      })
       return
     }
 
