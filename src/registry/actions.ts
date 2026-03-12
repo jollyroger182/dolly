@@ -103,7 +103,12 @@ app.action(
     if (!poll) return
 
     if (poll.creator_user_id !== body.user.id) {
-      await respond("You cannot edit another user's poll.")
+      // for some reason this doesn't work smh so just fail silently
+      // await respond({
+      //   text: "You cannot edit another user's poll.",
+      //   replace_original: false,
+      //   response_type: 'ephemeral',
+      // })
       return
     }
 
