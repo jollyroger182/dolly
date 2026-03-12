@@ -5,6 +5,7 @@ import Polls from '../services/polls'
 import Responses from '../services/responses'
 import app from '../slack'
 import { handlePollModal } from './modal'
+import { delay } from '../utils'
 
 interface EditPollArguments {
   trigger_id: string
@@ -26,6 +27,8 @@ export async function handleEditPoll({
     text: poll.question,
     options: poll.choices.map((c) => c.text).join('\n'),
     error,
+    title: 'Edit poll',
+    submit: 'Save',
   })
 }
 
@@ -51,8 +54,8 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
 
   const oldChoices = await Polls.fetchChoices(id)
   const choiceChanges = matchChoices(oldChoices, choices)
-  console.log(choiceChanges)
   if (choiceChanges.changed) {
+    await delay(500)
     await confirmEditChoices(poll, params, choiceChanges)
     return
   }

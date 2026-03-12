@@ -10,6 +10,8 @@ interface PollModalArguments {
   text?: string
   options?: string
   error?: string
+  title?: string
+  submit?: string
 }
 
 export async function handlePollModal({
@@ -20,6 +22,8 @@ export async function handlePollModal({
   text,
   options,
   error,
+  title = 'Create a poll',
+  submit = 'Create',
 }: PollModalArguments) {
   const errorBlocks: KnownBlock[] = error
     ? [
@@ -54,9 +58,9 @@ export async function handlePollModal({
       callback_id: callback_id,
       private_metadata,
 
-      title: { type: 'plain_text', text: 'Create a poll' },
+      title: { type: 'plain_text', text: title },
       close: { type: 'plain_text', text: 'Cancel' },
-      submit: { type: 'plain_text', text: 'Create' },
+      submit: { type: 'plain_text', text: submit },
 
       blocks: [
         ...errorBlocks,
