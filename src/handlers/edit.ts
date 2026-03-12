@@ -27,8 +27,7 @@ export async function handleEditPoll({
     text: poll.question,
     options: poll.choices.map((c) => c.text).join('\n'),
     error,
-    title: 'Edit poll',
-    submit: 'Save',
+    edit: true,
   })
 }
 
@@ -37,19 +36,17 @@ interface ConfirmEditPoll {
   trigger_id: string
   question: string
   choices: string[]
-  choicesConfirmed?: boolean
-  anonymous: boolean
 }
 
 export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
-  const { private_metadata, question, choices, anonymous } = params
+  const { private_metadata, question, choices } = params
 
   const { id, response_url } = JSON.parse(private_metadata) as {
     id: number
     response_url: string
   }
 
-  const poll = await Polls.update({ id, question, anonymous })
+  const poll = await Polls.update({ id, question })
   if (!poll) return
 
   const oldChoices = await Polls.fetchChoices(id)
@@ -82,12 +79,10 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
 
 interface ConfirmEditChoices {
   private_metadata: string
-  trigger_id: string
 }
 
 export async function handleConfirmEditChoices({
   private_metadata,
-  trigger_id,
 }: ConfirmEditChoices) {
   const { id, response_url, changes } = JSON.parse(private_metadata) as {
     id: number

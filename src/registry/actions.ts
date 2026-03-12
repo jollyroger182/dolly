@@ -129,17 +129,12 @@ app.view(
     ]!.value!.trim()
       .split('\n')
       .filter((c) => c)
-    const settings = payload.state.values[BLOCK_ID.settings]![
-      ACTION_ID.value
-    ]!.selected_options!.map((o) => o.value)
-    const anonymous = settings.includes(VALUE.anonymous)
 
     await handleConfirmEditPoll({
       private_metadata: payload.private_metadata,
       trigger_id: body.trigger_id,
       question,
       choices,
-      anonymous,
     })
   },
 )
@@ -153,7 +148,6 @@ app.view(
 
     await handleConfirmEditChoices({
       private_metadata: payload.private_metadata,
-      trigger_id: body.trigger_id,
     })
   },
 )

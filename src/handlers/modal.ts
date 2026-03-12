@@ -10,8 +10,7 @@ interface PollModalArguments {
   text?: string
   options?: string
   error?: string
-  title?: string
-  submit?: string
+  edit?: boolean
 }
 
 export async function handlePollModal({
@@ -22,8 +21,7 @@ export async function handlePollModal({
   text,
   options,
   error,
-  title = 'Create a poll',
-  submit = 'Create',
+  edit,
 }: PollModalArguments) {
   const errorBlocks: KnownBlock[] = error
     ? [
@@ -51,6 +49,27 @@ export async function handlePollModal({
     }
   }
 
+  const settingsBlocks: KnownBlock[] = edit
+    ? []
+    : [
+        {
+          type: 'input',
+          block_id: BLOCK_ID.settings,
+          label: { type: 'plain_text', text: 'Options' },
+          element: {
+            type: 'checkboxes',
+            action_id: ACTION_ID.value,
+            options: [
+              {
+                text: { type: 'plain_text', text: 'Anonymous poll' },
+                value: VALUE.anonymous,
+              },
+            ],
+          },
+          optional: true,
+        },
+      ]
+
   return await app.client.views.open({
     trigger_id,
     view: {
@@ -58,9 +77,9 @@ export async function handlePollModal({
       callback_id: callback_id,
       private_metadata,
 
-      title: { type: 'plain_text', text: title },
+      title: { type: 'plain_text', text: edit ? 'Edit poll' : 'Create a poll' },
       close: { type: 'plain_text', text: 'Cancel' },
-      submit: { type: 'plain_text', text: submit },
+      submit: { type: 'plain_text', text: edit ? 'Save' : 'Create' },
 
       blocks: [
         ...errorBlocks,
@@ -98,22 +117,7 @@ export async function handlePollModal({
             initial_value: options,
           },
         },
-        {
-          type: 'input',
-          block_id: BLOCK_ID.settings,
-          label: { type: 'plain_text', text: 'Options' },
-          element: {
-            type: 'checkboxes',
-            action_id: ACTION_ID.value,
-            options: [
-              {
-                text: { type: 'plain_text', text: 'Anonymous poll' },
-                value: VALUE.anonymous,
-              },
-            ],
-          },
-          optional: true,
-        },
+        ...settingsBlocks,
       ],
     },
   })

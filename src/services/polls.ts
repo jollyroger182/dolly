@@ -61,7 +61,7 @@ const Polls = {
     const responses = await Responses.fetchByPoll(id)
     return { ...poll, responses }
   },
-  async update(poll: Pick<DB.Poll, 'id' | 'question' | 'anonymous'>) {
+  async update(poll: Partial<Pick<DB.Poll, 'id' | 'question'>>) {
     const payload = { ...poll, updated_at: new Date(), id: undefined }
     const [updated] = await sql<
       DB.Poll[]
