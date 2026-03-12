@@ -4,6 +4,7 @@ namespace DB {
     creator_user_id: string
     question: string
     anonymous: boolean
+    multi_select: boolean
     created_at: Date
     updated_at: Date
   }

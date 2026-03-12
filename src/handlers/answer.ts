@@ -12,13 +12,21 @@ interface TogglePollAnswer {
 
 export async function handleTogglePollAnswer({
   respond,
-  poll,
+  poll: pollId,
   user,
   choice,
 }: TogglePollAnswer) {
-  await Responses.toggle({ poll, user, choice, single: true })
+  const poll = await Polls.fetch(pollId)
+  if (!poll) return
 
-  const data = (await Polls.fetchWithResponses(poll))!
+  await Responses.toggle({
+    poll: pollId,
+    user,
+    choice,
+    single: !poll.multi_select,
+  })
+
+  const data = (await Polls.fetchWithResponses(pollId))!
 
   await respond({
     replace_original: true,

@@ -38,6 +38,7 @@ app.view(
     ]!.selected_options!.map((o) => o.value)
 
     const anonymous = settings.includes(VALUE.anonymous)
+    const multi = settings.includes(VALUE.multiSelect)
 
     if (choices.length < 2) {
       await handleCreatePoll({
@@ -56,6 +57,7 @@ app.view(
       question,
       choices,
       anonymous,
+      multi_select: multi,
     })
   },
 )

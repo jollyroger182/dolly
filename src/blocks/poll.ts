@@ -28,6 +28,10 @@ export async function generatePollBlocks(
     ? [{ type: 'plain_text', text: 'Anonymous poll' }]
     : []
 
+  const multiElements: ContextBlockElement[] = poll.multi_select
+    ? [{ type: 'plain_text', text: 'Multi-select' }]
+    : []
+
   return [
     {
       type: 'section',
@@ -68,6 +72,7 @@ export async function generatePollBlocks(
       elements: [
         { type: 'mrkdwn', text: `Asked by <@${poll.creator_user_id}>` },
         ...anonymousElements,
+        ...multiElements,
         ...editedElements,
       ],
     },

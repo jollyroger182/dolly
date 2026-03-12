@@ -6,6 +6,7 @@ interface CreatePoll {
   question: string
   choices: string[]
   anonymous: boolean
+  multi_select: boolean
 }
 
 const Polls = {
@@ -14,6 +15,7 @@ const Polls = {
     question,
     choices,
     anonymous,
+    multi_select,
   }: CreatePoll): Promise<PollWithChoices> {
     return {
       ...(await sql.begin(async (sql) => {
@@ -21,6 +23,7 @@ const Polls = {
           creator_user_id: user,
           question,
           anonymous,
+          multi_select,
         }
         const [poll] = await sql<
           [DB.Poll]

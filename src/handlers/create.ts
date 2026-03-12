@@ -35,6 +35,7 @@ interface ConfirmCreatePollOptions {
   question: string
   choices: string[]
   anonymous: boolean
+  multi_select: boolean
 }
 
 export async function handleConfirmCreatePoll({
@@ -43,10 +44,17 @@ export async function handleConfirmCreatePoll({
   question,
   choices,
   anonymous,
+  multi_select,
 }: ConfirmCreatePollOptions) {
   console.log('create', question)
 
-  const poll = await Polls.create({ user, question, choices, anonymous })
+  const poll = await Polls.create({
+    user,
+    question,
+    choices,
+    anonymous,
+    multi_select,
+  })
 
   const blocks = await generatePollBlocks({ ...poll, responses: [] })
 

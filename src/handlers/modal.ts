@@ -64,6 +64,10 @@ export async function handlePollModal({
                 text: { type: 'plain_text', text: 'Anonymous poll' },
                 value: VALUE.anonymous,
               },
+              {
+                text: { type: 'plain_text', text: 'Multi-select' },
+                value: VALUE.multiSelect,
+              },
             ],
           },
           optional: true,

@@ -25,5 +25,6 @@ export const ACTION_ID = {
 
 export const VALUE = {
   anonymous: 'anonymous',
+  multiSelect: 'multi_select',
   edit: 'edit',
 }
