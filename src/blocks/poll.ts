@@ -4,6 +4,7 @@ import type {
   KnownBlock,
   RichTextBlock,
   RichTextElement,
+  SectionBlock,
 } from '@slack/web-api'
 import app from '../slack'
 import { ACTION_ID, BLOCK_ID, VALUE } from '../consts'
@@ -89,40 +90,26 @@ export async function generatePollChoiceBlock(
   }
   if (!total) total = 1
 
-  const elements: RichTextElement[] = []
+  let text = ''
 
   for (const [index, choice] of choices.entries()) {
-    elements.push(
-      { type: 'text', text: choice.text, style: { bold: true } },
-      { type: 'text', text: '\n' },
-    )
+    text += `*${choice.text}*\n`
 
     const users = counter.get(choice.id)!
     if (users.length && !anonymous) {
-      for (const [index, item] of users.entries()) {
-        elements.push({ type: 'user', user_id: item })
-        elements.push({
-          type: 'text',
-          text: index === users.length - 1 ? '\n' : ', ',
-        })
-      }
+      text += users
+        .values()
+        .map((u) => `<@${u}>`)
+        .toArray()
+        .join(', ')
+      text += '\n'
     }
 
-    elements.push(
-      {
-        type: 'text',
-        text: generateProgressBar(users.length / total, 20),
-        style: { code: true },
-      },
-      {
-        type: 'text',
-        text: ` ${Math.round((users.length / total) * 100)}% (${users.length})${index === choices.length - 1 ? '' : '\n'}`,
-      },
-    )
+    text += `\`\u2060${generateProgressBar(users.length / total, 20)}\u2060\` ${Math.round((users.length / total) * 100)}% (${users.length})${index === choices.length - 1 ? '' : '\n'}\n`
   }
 
   return {
-    type: 'rich_text',
-    elements: [{ type: 'rich_text_section', elements }],
-  } satisfies RichTextBlock
+    type: 'section',
+    text: { type: 'mrkdwn', text: text.trim() },
+  } satisfies SectionBlock
 }
