@@ -77,23 +77,28 @@ const Polls = {
     remove: number[],
   ): Promise<DB.PollChoice[]> {
     return await sql.begin(async (sql) => {
-      await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
+      if (remove) {
+        await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
+      }
 
-      const existing = await sql<
-        DB.PollChoice[]
-      >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
-      const maxPosition = Math.max(...existing.map((c) => c.position))
+      if (add) {
+        const existing = await sql<
+          DB.PollChoice[]
+        >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+        const maxPosition = Math.max(...existing.map((c) => c.position))
 
-      const newChoices = add.map((c, i) => ({
-        poll_id: id,
-        text: c,
-        position: maxPosition + i + 1,
-      }))
-      const choices = await sql<
-        DB.PollChoice[]
-      >`INSERT INTO poll_choices ${sql(newChoices)} RETURNING *`
+        const newChoices = add.map((c, i) => ({
+          poll_id: id,
+          text: c,
+          position: maxPosition + i + 1,
+        }))
+        const choices = await sql<
+          DB.PollChoice[]
+        >`INSERT INTO poll_choices ${sql(newChoices)} RETURNING *`
+        return choices
+      }
 
-      return choices
+      return []
     })
   },
 }
