@@ -6,7 +6,7 @@ import type {
   RichTextElement,
 } from '@slack/web-api'
 import app from '../slack'
-import { ACTION_ID } from '../consts'
+import { ACTION_ID, BLOCK_ID, VALUE } from '../consts'
 import { randomUUIDv7 } from 'bun'
 import { generateProgressBar } from './progress'
 
@@ -30,7 +30,15 @@ export async function generatePollBlocks(
   return [
     {
       type: 'section',
+      block_id: BLOCK_ID.pollTitle,
       text: { type: 'mrkdwn', text: `*${poll.question}*` },
+      accessory: {
+        type: 'overflow',
+        action_id: JSON.stringify({ poll: poll.id }),
+        options: [
+          { text: { type: 'plain_text', text: 'Edit' }, value: VALUE.edit },
+        ],
+      },
     },
     { type: 'divider' },
     await generatePollChoiceBlock(poll.choices, poll.responses, poll),

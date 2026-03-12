@@ -1,7 +1,12 @@
+import { Cache } from '../cache'
 import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE } from '../consts'
 import { handleAnswerPoll } from '../handlers/answer'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
+import Polls from '../services/polls'
 import app from '../slack'
+import { handleConfirmEditChoices, handleConfirmEditPoll, handleEditPoll } from '../handlers/edit'
+
+const responseUrlCache = new Cache<string, string>()
 
 app.view(
   CALLBACK_ID.createPollModal,
@@ -66,6 +71,74 @@ app.action(
       poll: pollId,
       user: body.user.id,
       choices: choiceId >= 0 ? [choiceId] : null,
+    })
+  },
+)
+
+app.action(
+  { type: 'block_actions', block_id: BLOCK_ID.pollTitle },
+  async ({ ack, respond, payload, body }) => {
+    if (payload.type !== 'overflow') return
+
+    await ack()
+
+    const { poll: pollId } = JSON.parse(payload.action_id) as { poll: number }
+
+    const poll = await Polls.fetchWithChoices(pollId)
+    if (!poll) return
+
+    if (poll.creator_user_id !== body.user.id) {
+      await respond("You cannot edit another user's poll.")
+      return
+    }
+
+    await handleEditPoll({
+      trigger_id: body.trigger_id,
+      poll,
+      response_url: body.response_url,
+    })
+  },
+)
+
+app.view(
+  { type: 'view_submission', callback_id: CALLBACK_ID.editPollModal },
+  async ({ ack, payload, body }) => {
+    if (body.type !== 'view_submission') return
+
+    await ack()
+
+    const question =
+      payload.state.values[BLOCK_ID.question]![ACTION_ID.value]!.value!
+    const choices = payload.state.values[BLOCK_ID.options]![
+      ACTION_ID.value
+    ]!.value!.trim()
+      .split('\n')
+      .filter((c) => c)
+    const settings = payload.state.values[BLOCK_ID.settings]![
+      ACTION_ID.value
+    ]!.selected_options!.map((o) => o.value)
+    const anonymous = settings.includes(VALUE.anonymous)
+
+    await handleConfirmEditPoll({
+      private_metadata: payload.private_metadata,
+      trigger_id: body.trigger_id,
+      question,
+      choices,
+      anonymous,
+    })
+  },
+)
+
+app.view(
+  { type: 'view_submission', callback_id: CALLBACK_ID.confirmEditChoices },
+  async ({ ack, payload, body }) => {
+    if (body.type !== 'view_submission') return
+
+    await ack()
+
+    await handleConfirmEditChoices({
+      private_metadata: payload.private_metadata,
+      trigger_id: body.trigger_id,
     })
   },
 )

@@ -44,12 +44,15 @@ const Polls = {
   async fetch(id: number): Promise<DB.Poll | undefined> {
     return (await sql<DB.Poll[]>`SELECT * FROM polls WHERE id = ${id}`)[0]
   },
+  async fetchChoices(id: number): Promise<DB.PollChoice[]> {
+    return await sql<
+      DB.PollChoice[]
+    >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+  },
   async fetchWithChoices(id: number): Promise<PollWithChoices | undefined> {
     const poll = await Polls.fetch(id)
     if (!poll) return
-    const choices = await sql<
-      DB.PollChoice[]
-    >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+    const choices = await Polls.fetchChoices(id)
     return { ...poll, choices }
   },
   async fetchWithResponses(id: number): Promise<PollWithResponses | undefined> {
@@ -57,6 +60,40 @@ const Polls = {
     if (!poll) return
     const responses = await Responses.fetchByPollWithAnswers(id)
     return { ...poll, responses }
+  },
+  async update(poll: Pick<DB.Poll, 'id' | 'question' | 'anonymous'>) {
+    const payload = { ...poll, updated_at: new Date(), id: undefined }
+    const [updated] = await sql<
+      DB.Poll[]
+    >`UPDATE polls SET ${sql(payload)} WHERE id = ${poll.id} RETURNING *`
+    return updated
+  },
+  async changeChoices(
+    id: number,
+    add: string[],
+    remove: number[],
+  ): Promise<DB.PollChoice[]> {
+    return await sql.begin(async (sql) => {
+      await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
+
+      await sql`DELETE FROM poll_responses pr WHERE NOT EXISTS (SELECT pra.id FROM poll_response_answers pra WHERE pra.response_id = pr.id)`
+
+      const existing = await sql<
+        DB.PollChoice[]
+      >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+      const maxPosition = Math.max(...existing.map((c) => c.position))
+
+      const newChoices = add.map((c, i) => ({
+        poll_id: id,
+        text: c,
+        position: maxPosition + i + 1,
+      }))
+      const choices = await sql<
+        DB.PollChoice[]
+      >`INSERT INTO poll_choices ${sql(newChoices)} RETURNING *`
+
+      return choices
+    })
   },
 }
 
