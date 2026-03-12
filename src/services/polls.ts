@@ -58,7 +58,7 @@ const Polls = {
   async fetchWithResponses(id: number): Promise<PollWithResponses | undefined> {
     const poll = await Polls.fetchWithChoices(id)
     if (!poll) return
-    const responses = await Responses.fetchByPollWithAnswers(id)
+    const responses = await Responses.fetchByPoll(id)
     return { ...poll, responses }
   },
   async update(poll: Pick<DB.Poll, 'id' | 'question' | 'anonymous'>) {
@@ -75,8 +75,6 @@ const Polls = {
   ): Promise<DB.PollChoice[]> {
     return await sql.begin(async (sql) => {
       await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
-
-      await sql`DELETE FROM poll_responses pr WHERE NOT EXISTS (SELECT pra.id FROM poll_response_answers pra WHERE pra.response_id = pr.id)`
 
       const existing = await sql<
         DB.PollChoice[]

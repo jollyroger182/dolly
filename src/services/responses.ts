@@ -1,9 +1,10 @@
 import { sql } from 'bun'
 
-interface CreateResponse {
+interface ToggleResponse {
   poll: number
   user: string
-  choices: number[]
+  choice: number
+  single: boolean
 }
 
 interface DeleteByUser {
@@ -12,32 +13,31 @@ interface DeleteByUser {
 }
 
 const Responses = {
-  async createOrReplace({
+  async toggle({
     poll,
     user,
-    choices,
-  }: CreateResponse): Promise<PollResponseWithAnswers> {
-    return {
-      ...(await sql.begin(async (sql) => {
-        await sql`DELETE FROM poll_responses WHERE poll_id = ${poll} AND user_id = ${user}`
+    choice,
+    single,
+  }: ToggleResponse): Promise<DB.PollResponse | undefined> {
+    return await sql.begin(async (sql) => {
+      const [existing] = await sql<
+        DB.PollResponse[]
+      >`SELECT * FROM poll_responses WHERE user_id = ${user} AND choice_id = ${choice}`
 
-        const payload = { poll_id: poll, user_id: user }
+      if (existing) {
+        await sql`DELETE FROM poll_responses WHERE id = ${existing.id}`
+        return
+      } else {
+        const payload = { poll_id: poll, choice_id: choice, user_id: user }
+        if (single) {
+          await sql`DELETE FROM poll_responses WHERE user_id = ${user} AND poll_id = ${poll}`
+        }
         const [response] = await sql<
           [DB.PollResponse]
         >`INSERT INTO poll_responses ${sql(payload)} RETURNING *`
-
-        const newAnswers = choices.map((c) => ({
-          poll_id: poll,
-          response_id: response.id,
-          choice_id: c,
-        }))
-        const answers = await sql<
-          DB.PollResponseAnswer[]
-        >`INSERT INTO poll_response_answers ${sql(newAnswers)} RETURNING *`
-
-        return { ...response, answers }
-      })),
-    }
+        return response
+      }
+    })
   },
   async deleteByUser({ poll, user }: DeleteByUser) {
     await sql`DELETE FROM poll_responses WHERE poll_id = ${poll} AND user_id = ${user}`
@@ -46,18 +46,6 @@ const Responses = {
     return await sql<
       DB.PollResponse[]
     >`SELECT * FROM poll_responses WHERE poll_id = ${poll}`
-  },
-  async fetchByPollWithAnswers(
-    poll: number,
-  ): Promise<PollResponseWithAnswers[]> {
-    const responses = await Responses.fetchByPoll(poll)
-    const answers = await sql<
-      DB.PollResponseAnswer[]
-    >`SELECT * FROM poll_response_answers WHERE poll_id = ${poll}`
-    return responses.map((r) => ({
-      ...r,
-      answers: answers.filter((a) => a.response_id === r.id),
-    }))
   },
 }
 

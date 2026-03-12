@@ -75,7 +75,7 @@ export async function generatePollBlocks(
 
 export async function generatePollChoiceBlock(
   choices: DB.PollChoice[],
-  responses: PollResponseWithAnswers[],
+  responses: DB.PollResponse[],
   { anonymous }: { anonymous: boolean },
 ) {
   const counter = new Map<number, string[]>()
@@ -84,10 +84,8 @@ export async function generatePollChoiceBlock(
     counter.set(choice.id, [])
   }
   for (const response of responses) {
-    for (const answer of response.answers) {
-      counter.get(answer.choice_id)!.push(response.user_id)
-      total++
-    }
+    counter.get(response.choice_id)!.push(response.user_id)
+    total++
   }
   if (!total) total = 1
 

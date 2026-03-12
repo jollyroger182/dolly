@@ -18,16 +18,10 @@ namespace DB {
   interface PollResponse {
     id: number
     poll_id: number
+    choice_id: number
     user_id: string
     created_at: Date
     updated_at: Date
-  }
-
-  interface PollResponseAnswer {
-    id: number
-    poll_id: number
-    response_id: number
-    choice_id: number
   }
 }
 
@@ -36,9 +30,5 @@ interface PollWithChoices extends DB.Poll {
 }
 
 interface PollWithResponses extends PollWithChoices {
-  responses: PollResponseWithAnswers[]
-}
-
-interface PollResponseWithAnswers extends DB.PollResponse {
-  answers: DB.PollResponseAnswer[]
+  responses: DB.PollResponse[]
 }

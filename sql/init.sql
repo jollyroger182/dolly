@@ -35,30 +35,17 @@ CREATE UNIQUE INDEX poll_choices_poll_position ON poll_choices (poll_id, positio
 CREATE TABLE poll_responses (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+    choice_id INTEGER NOT NULL REFERENCES poll_choices(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE (id, poll_id),
-    UNIQUE (poll_id, user_id)
+    UNIQUE (poll_id, user_id, choice_id)
 );
 
 CREATE INDEX poll_responses_poll ON poll_responses (poll_id);
 CREATE INDEX poll_responses_user ON poll_responses (user_id);
-
-
-CREATE TABLE poll_response_answers (
-    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    poll_id INTEGER NOT NULL,
-    response_id INTEGER NOT NULL,
-    choice_id INTEGER NOT NULL,
-
-    FOREIGN KEY (response_id, poll_id) REFERENCES poll_responses(id, poll_id) ON DELETE CASCADE,
-    FOREIGN KEY (choice_id, poll_id) REFERENCES poll_choices(id, poll_id) ON DELETE CASCADE
-);
-
-CREATE INDEX poll_response_answers_poll ON poll_response_answers (poll_id);
-CREATE INDEX poll_response_answers_response ON poll_response_answers (response_id);
-CREATE INDEX poll_response_answers_choice ON poll_response_answers (choice_id);
+CREATE INDEX poll_responses_choice ON poll_responses (choice_id);
+CREATE INDEX poll_responses_user_choice ON poll_responses (user_id, choice_id);
 
 COMMIT;

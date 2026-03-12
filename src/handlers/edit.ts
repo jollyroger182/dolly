@@ -60,7 +60,7 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
   const fullPoll = {
     ...poll,
     choices: oldChoices,
-    responses: await Responses.fetchByPollWithAnswers(id),
+    responses: await Responses.fetchByPoll(id),
   }
 
   const payload = {

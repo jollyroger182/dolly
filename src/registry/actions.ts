@@ -1,10 +1,17 @@
 import { Cache } from '../cache'
 import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE } from '../consts'
-import { handleAnswerPoll } from '../handlers/answer'
+import {
+  handleClearResponses,
+  handleTogglePollAnswer,
+} from '../handlers/answer'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
 import Polls from '../services/polls'
 import app from '../slack'
-import { handleConfirmEditChoices, handleConfirmEditPoll, handleEditPoll } from '../handlers/edit'
+import {
+  handleConfirmEditChoices,
+  handleConfirmEditPoll,
+  handleEditPoll,
+} from '../handlers/edit'
 
 const responseUrlCache = new Cache<string, string>()
 
@@ -66,12 +73,20 @@ app.action(
       choice: number
     }
 
-    await handleAnswerPoll({
-      respond,
-      poll: pollId,
-      user: body.user.id,
-      choices: choiceId >= 0 ? [choiceId] : null,
-    })
+    if (choiceId >= 0) {
+      await handleTogglePollAnswer({
+        respond,
+        poll: pollId,
+        user: body.user.id,
+        choice: choiceId,
+      })
+    } else {
+      await handleClearResponses({
+        respond,
+        poll: pollId,
+        user: body.user.id,
+      })
+    }
   },
 )
 
