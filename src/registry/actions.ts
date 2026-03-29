@@ -86,11 +86,20 @@ app.action(
         user: body.user.id,
         choice: choiceId,
       })
-    } else {
+    } else if (choiceId === -1) {
       await handleClearResponses({
         respond,
         poll: pollId,
         user: body.user.id,
+      })
+    } else if (choiceId === -2) {
+      const poll = await Polls.fetch(pollId)
+      if (!poll) return
+      await handleAddOption({
+        trigger_id: body.trigger_id,
+        poll,
+        user: body.user.id,
+        response_url: body.response_url,
       })
     }
   },
@@ -108,15 +117,15 @@ app.action(
     const poll = await Polls.fetchWithChoices(pollId)
     if (!poll) return
 
-    if (poll.creator_user_id !== body.user.id) {
+    const value = payload.selected_option.value
+
+    if (poll.creator_user_id !== body.user.id && value !== VALUE.addOption) {
       await showErrorModal({
         trigger_id: body.trigger_id,
         error: 'You are not allowed to perform this action.',
       })
       return
     }
-
-    const value = payload.selected_option.value
 
     if (value === VALUE.edit) {
       await handleEditPoll({

@@ -101,8 +101,12 @@ export async function generatePollBlocks(
           placeholder: { type: 'plain_text', text: 'Choose your answer' },
           options: [
             {
-              text: { type: 'plain_text', text: 'Clear answers' },
+              text: { type: 'plain_text', text: '--- Clear answers ---' },
               value: JSON.stringify({ poll: poll.id, choice: -1 }),
+            },
+            {
+              text: { type: 'plain_text', text: '--- Add an option ---' },
+              value: JSON.stringify({ poll: poll.id, choice: -2 }),
             },
             ...poll.choices.map<PlainTextOption>((choice) => ({
               text: { type: 'plain_text', text: choice.text },

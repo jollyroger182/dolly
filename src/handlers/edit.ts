@@ -71,7 +71,7 @@ export async function handleConfirmEditPoll({
 
 interface AddOption {
   trigger_id: string
-  poll: PollWithChoices
+  poll: DB.Poll
   user: string
   response_url: string
 }
