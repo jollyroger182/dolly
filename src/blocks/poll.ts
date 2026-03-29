@@ -2,18 +2,69 @@ import type {
   PlainTextOption,
   ContextBlockElement,
   KnownBlock,
-  RichTextBlock,
-  RichTextElement,
   SectionBlock,
 } from '@slack/web-api'
-import app from '../slack'
 import { ACTION_ID, BLOCK_ID, VALUE } from '../consts'
-import { randomUUIDv7 } from 'bun'
 import { generateProgressBar } from './progress'
 
 export async function generatePollBlocks(
   poll: PollWithResponses,
 ): Promise<KnownBlock[]> {
+  // const addChoiceBlocks: KnownBlock[] =
+  //   poll.add_choice_setting === 'no_one'
+  //     ? []
+  //     : [
+  //         {
+  //           type: 'input',
+  //           label: { type: 'plain_text', text: 'Add an option' },
+  //           element: {
+  //             type: 'plain_text_input',
+  //             dispatch_action_config: {
+  //               trigger_actions_on: ['on_enter_pressed'],
+  //             },
+  //             placeholder: { type: 'plain_text', text: 'Add an option...' },
+  //           },
+  //           hint: {
+  //             type: 'plain_text',
+  //             text:
+  //               poll.add_choice_setting === 'anyone'
+  //                 ? 'Anyone can add options.'
+  //                 : 'Only the poll creator can add options.',
+  //           },
+  //         },
+  //       ]
+
+  const addChoiceOptions: PlainTextOption[] =
+    poll.add_choice_setting === 'no_one'
+      ? []
+      : [
+          {
+            text: { type: 'plain_text', text: 'Add option' },
+            value: VALUE.addOption,
+          },
+        ]
+
+  const anonymousElements: ContextBlockElement[] = poll.anonymous
+    ? [{ type: 'plain_text', text: 'Anonymous poll' }]
+    : []
+
+  const multiElements: ContextBlockElement[] = poll.multi_select
+    ? [{ type: 'plain_text', text: 'Multi-select' }]
+    : []
+
+  const addChoiceElements: ContextBlockElement[] =
+    poll.add_choice_setting === 'no_one'
+      ? []
+      : [
+          {
+            type: 'plain_text',
+            text:
+              poll.add_choice_setting === 'anyone'
+                ? 'Anyone can add options'
+                : 'Only the creator can add options',
+          },
+        ]
+
   const editedElements: ContextBlockElement[] =
     poll.created_at.getTime() !== poll.updated_at.getTime()
       ? [
@@ -23,14 +74,6 @@ export async function generatePollBlocks(
           },
         ]
       : []
-
-  const anonymousElements: ContextBlockElement[] = poll.anonymous
-    ? [{ type: 'plain_text', text: 'Anonymous poll' }]
-    : []
-
-  const multiElements: ContextBlockElement[] = poll.multi_select
-    ? [{ type: 'plain_text', text: 'Multi-select' }]
-    : []
 
   return [
     {
@@ -43,11 +86,12 @@ export async function generatePollBlocks(
         options: [
           { text: { type: 'plain_text', text: 'Edit' }, value: VALUE.edit },
           { text: { type: 'plain_text', text: 'Delete' }, value: VALUE.delete },
+          ...addChoiceOptions,
         ],
       },
     },
     { type: 'divider' },
-    await generatePollChoiceBlock(poll.choices, poll.responses, poll),
+    await generatePollChoiceBlock(poll),
     {
       type: 'actions',
       elements: [
@@ -68,23 +112,26 @@ export async function generatePollBlocks(
         },
       ],
     },
+    // ...addChoiceBlocks,
     {
       type: 'context',
       elements: [
         { type: 'mrkdwn', text: `Asked by <@${poll.creator_user_id}>` },
         ...anonymousElements,
         ...multiElements,
+        ...addChoiceElements,
         ...editedElements,
       ],
     },
   ]
 }
 
-export async function generatePollChoiceBlock(
-  choices: DB.PollChoice[],
-  responses: DB.PollResponse[],
-  { anonymous }: { anonymous: boolean },
-) {
+export async function generatePollChoiceBlock({
+  choices,
+  responses,
+  anonymous,
+  add_choice_setting,
+}: PollWithResponses) {
   const counter = new Map<number, string[]>()
   let total = 0
   for (const choice of choices) {
@@ -99,6 +146,9 @@ export async function generatePollChoiceBlock(
   let text = ''
 
   for (const [index, choice] of choices.entries()) {
+    if (add_choice_setting === 'anyone') {
+      text += `<@${choice.creator_user_id}>: `
+    }
     text += `*${choice.text}*\n`
 
     const users = counter.get(choice.id)!

@@ -7,6 +7,7 @@ interface CreatePoll {
   choices: string[]
   anonymous: boolean
   multi_select: boolean
+  add_choice_setting: 'no_one' | 'creator' | 'anyone'
 }
 
 const Polls = {
@@ -16,6 +17,7 @@ const Polls = {
     choices,
     anonymous,
     multi_select,
+    add_choice_setting,
   }: CreatePoll): Promise<PollWithChoices> {
     return {
       ...(await sql.begin(async (sql) => {
@@ -24,6 +26,7 @@ const Polls = {
           question,
           anonymous,
           multi_select,
+          add_choice_setting,
         }
         const [poll] = await sql<
           [DB.Poll]
@@ -51,7 +54,7 @@ const Polls = {
   async fetchChoices(id: number): Promise<DB.PollChoice[]> {
     return await sql<
       DB.PollChoice[]
-    >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
+    >`SELECT * FROM poll_choices WHERE poll_id = ${id} ORDER BY position ASC`
   },
   async fetchWithChoices(id: number): Promise<PollWithChoices | undefined> {
     const poll = await Polls.fetch(id)
@@ -72,37 +75,19 @@ const Polls = {
     >`UPDATE polls SET ${sql(payload)} WHERE id = ${poll.id} RETURNING *`
     return updated
   },
-  async changeChoices(
+  async addChoice(
     id: number,
-    add: string[],
-    remove: number[],
-    user: string,
-  ): Promise<DB.PollChoice[]> {
-    return await sql.begin(async (sql) => {
-      if (remove) {
-        await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
-      }
-
-      if (add.length) {
-        const existing = await sql<
-          DB.PollChoice[]
-        >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
-        const maxPosition = Math.max(...existing.map((c) => c.position))
-
-        const newChoices = add.map<Partial<DB.PollChoice>>((c, i) => ({
-          poll_id: id,
-          creator_user_id: user,
-          text: c,
-          position: maxPosition + i + 1,
-        }))
-        const choices = await sql<
-          DB.PollChoice[]
-        >`INSERT INTO poll_choices ${sql(newChoices)} RETURNING *`
-        return choices
-      }
-
-      return []
-    })
+    { text, creator_user_id }: Pick<DB.PollChoice, 'text' | 'creator_user_id'>,
+  ) {
+    try {
+      const [newChoice] = await sql<
+        [DB.PollChoice]
+      >`INSERT INTO poll_choices(poll_id, creator_user_id, text, position) SELECT ${id}, ${creator_user_id}, ${text}, COALESCE(MAX(position), 0) + 1 FROM poll_choices WHERE poll_id = ${id} RETURNING *`
+      return newChoice
+    } catch (e) {
+      console.error(e)
+      throw e
+    }
   },
 }
 

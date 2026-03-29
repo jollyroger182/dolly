@@ -49,6 +49,22 @@ export async function handlePollModal({
         },
       ]
 
+  const optionsBlocks: KnownBlock[] = edit
+    ? []
+    : [
+        {
+          type: 'input',
+          block_id: BLOCK_ID.options,
+          label: { type: 'plain_text', text: 'Options (one on each line)' },
+          element: {
+            type: 'plain_text_input',
+            action_id: ACTION_ID.value,
+            multiline: true,
+            initial_value: options,
+          },
+        },
+      ]
+
   const settingsBlocks: KnownBlock[] = edit
     ? []
     : [
@@ -71,6 +87,37 @@ export async function handlePollModal({
             ],
           },
           optional: true,
+        },
+        {
+          type: 'input',
+          block_id: BLOCK_ID.addChoiceSettings,
+          label: { type: 'plain_text', text: 'Who can add options' },
+          hint: {
+            type: 'plain_text',
+            text: 'Choose who can add options to this poll after creation.',
+          },
+          element: {
+            type: 'static_select',
+            action_id: ACTION_ID.value,
+            options: [
+              {
+                text: { type: 'plain_text', text: 'No one' },
+                value: VALUE.noOne,
+              },
+              {
+                text: { type: 'plain_text', text: 'You only' },
+                value: VALUE.creator,
+              },
+              {
+                text: { type: 'plain_text', text: 'Anyone' },
+                value: VALUE.anyone,
+              },
+            ],
+            initial_option: {
+              text: { type: 'plain_text', text: 'No one' },
+              value: VALUE.noOne,
+            },
+          },
         },
       ]
 
@@ -98,17 +145,7 @@ export async function handlePollModal({
           },
         },
         ...channelBlocks,
-        {
-          type: 'input',
-          block_id: BLOCK_ID.options,
-          label: { type: 'plain_text', text: 'Options (one on each line)' },
-          element: {
-            type: 'plain_text_input',
-            action_id: ACTION_ID.value,
-            multiline: true,
-            initial_value: options,
-          },
-        },
+        ...optionsBlocks,
         ...settingsBlocks,
       ],
     },

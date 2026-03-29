@@ -4,6 +4,10 @@ DROP TABLE IF EXISTS poll_response_answers;
 DROP TABLE IF EXISTS poll_responses;
 DROP TABLE IF EXISTS poll_choices;
 DROP TABLE IF EXISTS polls;
+DROP TYPE IF EXISTS poll_add_choice_setting;
+
+
+CREATE TYPE poll_add_choice_setting AS ENUM ('no_one', 'creator', 'anyone');
 
 
 CREATE TABLE polls (
@@ -12,6 +16,7 @@ CREATE TABLE polls (
     question TEXT NOT NULL,
     anonymous BOOLEAN NOT NULL DEFAULT FALSE,
     multi_select BOOLEAN NOT NULL DEFAULT FALSE,
+    add_choice_setting poll_add_choice_setting NOT NULL DEFAULT 'no_one',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -26,6 +31,7 @@ CREATE TABLE poll_choices (
     creator_user_id TEXT NOT NULL,
     text TEXT NOT NULL,
     position INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE (id, poll_id)
 );

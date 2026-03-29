@@ -5,6 +5,7 @@ namespace DB {
     question: string
     anonymous: boolean
     multi_select: boolean
+    add_choice_setting: 'no_one' | 'creator' | 'anyone'
     created_at: Date
     updated_at: Date
   }
@@ -15,6 +16,7 @@ namespace DB {
     creator_user_id: string
     text: string
     position: number
+    created_at: Date
   }
 
   interface PollResponse {

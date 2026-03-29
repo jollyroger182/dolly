@@ -1,11 +1,11 @@
 import type { KnownBlock } from '@slack/web-api'
 import { generatePollBlocks } from '../blocks/poll'
-import { CALLBACK_ID } from '../consts'
+import { ACTION_ID, BLOCK_ID, CALLBACK_ID } from '../consts'
 import Polls from '../services/polls'
 import Responses from '../services/responses'
 import app from '../slack'
 import { handlePollModal } from './modal'
-import { delay } from '../utils'
+import { delay, showErrorModal } from '../utils'
 
 interface EditPollArguments {
   trigger_id: string
@@ -35,12 +35,12 @@ interface ConfirmEditPoll {
   private_metadata: string
   trigger_id: string
   question: string
-  choices: string[]
 }
 
-export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
-  const { private_metadata, question, choices } = params
-
+export async function handleConfirmEditPoll({
+  private_metadata,
+  question,
+}: ConfirmEditPoll) {
   const { id, response_url } = JSON.parse(private_metadata) as {
     id: number
     response_url: string
@@ -49,17 +49,9 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
   const poll = await Polls.update({ id, question })
   if (!poll) return
 
-  const oldChoices = await Polls.fetchChoices(id)
-  const choiceChanges = matchChoices(oldChoices, choices)
-  if (choiceChanges.changed) {
-    await delay(500)
-    await confirmEditChoices(poll, params, choiceChanges)
-    return
-  }
-
   const fullPoll = {
     ...poll,
-    choices: oldChoices,
+    choices: await Polls.fetchChoices(id),
     responses: await Responses.fetchByPoll(id),
   }
 
@@ -77,22 +69,73 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
   })
 }
 
-interface ConfirmEditChoices {
+interface AddOption {
+  trigger_id: string
+  poll: PollWithChoices
+  user: string
+  response_url: string
+}
+
+export async function handleAddOption({
+  trigger_id,
+  poll,
+  user,
+  response_url,
+}: AddOption) {
+  if (poll.add_choice_setting === 'no_one') return
+  if (poll.add_choice_setting === 'creator' && user !== poll.creator_user_id) {
+    await showErrorModal({
+      trigger_id,
+      error: 'You cannot add an option to this poll.',
+    })
+    return
+  }
+
+  await app.client.views.open({
+    trigger_id,
+    view: {
+      type: 'modal',
+      callback_id: CALLBACK_ID.addOptionModal,
+      private_metadata: JSON.stringify({ id: poll.id, response_url }),
+
+      title: { type: 'plain_text', text: 'Add an option' },
+      close: { type: 'plain_text', text: 'Cancel' },
+      submit: { type: 'plain_text', text: 'Add' },
+
+      blocks: [
+        {
+          type: 'input',
+          block_id: BLOCK_ID.option,
+          label: { type: 'plain_text', text: 'Option' },
+          element: { type: 'plain_text_input', action_id: ACTION_ID.value },
+        },
+      ] satisfies KnownBlock[],
+    },
+  })
+}
+
+interface ConfirmAddOption {
   private_metadata: string
+  trigger_id: string
+  option: string
   user: string
 }
 
-export async function handleConfirmEditChoices({
+export async function handleConfirmAddOption({
   private_metadata,
+  trigger_id,
+  option,
   user,
-}: ConfirmEditChoices) {
-  const { id, response_url, changes } = JSON.parse(private_metadata) as {
+}: ConfirmAddOption) {
+  const { id, response_url } = JSON.parse(private_metadata) as {
     id: number
     response_url: string
-    changes: { added: string[]; deleted: number[] }
   }
 
-  await Polls.changeChoices(id, changes.added, changes.deleted, user)
+  await Polls.addChoice(id, {
+    text: option,
+    creator_user_id: user,
+  })
 
   const poll = await Polls.fetchWithResponses(id)
   if (!poll) return
@@ -107,93 +150,6 @@ export async function handleConfirmEditChoices({
     body: JSON.stringify(payload),
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-    },
-  })
-}
-
-function matchChoices(old: DB.PollChoice[], updated: string[]) {
-  const deleted: DB.PollChoice[] = []
-  const remaining = [...updated]
-
-  for (const choice of old) {
-    const idx = remaining.indexOf(choice.text)
-    if (idx >= 0) {
-      remaining.splice(idx, 1)
-      continue
-    }
-    deleted.push(choice)
-  }
-
-  return {
-    changed: !!(deleted.length || remaining.length),
-    deleted,
-    added: remaining,
-  }
-}
-
-async function confirmEditChoices(
-  poll: DB.Poll,
-  params: ConfirmEditPoll,
-  match: ReturnType<typeof matchChoices>,
-) {
-  const { response_url } = JSON.parse(params.private_metadata) as {
-    id: number
-    response_url: string
-  }
-
-  const addedBlocks: KnownBlock[] = match.added.length
-    ? [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `*Added choices:*\n${match.added.map((c) => `* ${c}`).join('\n')}`,
-          },
-        },
-      ]
-    : []
-
-  const removedBlocks: KnownBlock[] = match.deleted.length
-    ? [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `*Deleted choices* (any votes will be deleted):\n${match.deleted.map((c) => `* ${c.text}`).join('\n')}`,
-          },
-        },
-      ]
-    : []
-
-  await app.client.views.open({
-    trigger_id: params.trigger_id,
-    view: {
-      type: 'modal',
-      callback_id: CALLBACK_ID.confirmEditChoices,
-      private_metadata: JSON.stringify({
-        id: poll.id,
-        response_url,
-        changes: {
-          added: match.added,
-          deleted: match.deleted.map((c) => c.id),
-        },
-      }),
-
-      title: { type: 'plain_text', text: 'Confirm edit' },
-      close: { type: 'plain_text', text: 'Cancel' },
-      submit: { type: 'plain_text', text: 'Confirm' },
-
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: 'You have edited the choices of your poll. Please confirm the following changes. The poll results will be updated.',
-          },
-        },
-        ...addedBlocks,
-        ...removedBlocks,
-      ],
     },
   })
 }

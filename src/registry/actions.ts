@@ -4,13 +4,14 @@ import {
   handleTogglePollAnswer,
 } from '../handlers/answer'
 import { handleConfirmCreatePoll, handleCreatePoll } from '../handlers/create'
-import Polls from '../services/polls'
-import app from '../slack'
 import {
-  handleConfirmEditChoices,
+  handleAddOption,
+  handleConfirmAddOption,
   handleConfirmEditPoll,
   handleEditPoll,
 } from '../handlers/edit'
+import Polls from '../services/polls'
+import app from '../slack'
 import { showErrorModal, unique } from '../utils'
 
 app.view(
@@ -30,12 +31,16 @@ app.view(
         .split('\n')
         .filter((c) => c),
     )
+
     const settings = payload.state.values[BLOCK_ID.settings]![
       ACTION_ID.value
     ]!.selected_options!.map((o) => o.value)
-
     const anonymous = settings.includes(VALUE.anonymous)
     const multi = settings.includes(VALUE.multiSelect)
+
+    const addChoiceSetting = payload.state.values[BLOCK_ID.addChoiceSettings]![
+      ACTION_ID.value
+    ]!.selected_option!.value as (typeof VALUE)['noOne' | 'creator' | 'anyone']
 
     if (choices.length < 2) {
       await handleCreatePoll({
@@ -55,6 +60,7 @@ app.view(
       choices,
       anonymous,
       multi_select: multi,
+      add_choice_setting: addChoiceSetting,
     })
   },
 )
@@ -120,6 +126,13 @@ app.action(
       })
     } else if (value === VALUE.delete) {
       await respond({ delete_original: true })
+    } else if (value === VALUE.addOption) {
+      await handleAddOption({
+        trigger_id: body.trigger_id,
+        poll,
+        user: body.user.id,
+        response_url: body.response_url,
+      })
     }
   },
 )
@@ -133,30 +146,29 @@ app.view(
 
     const question =
       payload.state.values[BLOCK_ID.question]![ACTION_ID.value]!.value!
-    const choices = unique(
-      payload.state.values[BLOCK_ID.options]![ACTION_ID.value]!.value!.trim()
-        .split('\n')
-        .filter((c) => c),
-    )
 
     await handleConfirmEditPoll({
       private_metadata: payload.private_metadata,
       trigger_id: body.trigger_id,
       question,
-      choices,
     })
   },
 )
 
 app.view(
-  { type: 'view_submission', callback_id: CALLBACK_ID.confirmEditChoices },
+  { type: 'view_submission', callback_id: CALLBACK_ID.addOptionModal },
   async ({ ack, payload, body }) => {
     if (body.type !== 'view_submission') return
 
     await ack()
 
-    await handleConfirmEditChoices({
+    const option =
+      payload.state.values[BLOCK_ID.option]![ACTION_ID.value]!.value!
+
+    await handleConfirmAddOption({
       private_metadata: payload.private_metadata,
+      trigger_id: body.trigger_id,
+      option,
       user: body.user.id,
     })
   },
