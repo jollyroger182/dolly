@@ -153,7 +153,7 @@ export async function generatePollChoiceBlock({
     if (add_choice_setting === 'anyone') {
       text += `<@${choice.creator_user_id}>: `
     }
-    text += `*${choice.text}*\n`
+    text += `${choice.text}\n`
 
     const users = counter.get(choice.id)!
     if (users.length && !anonymous) {
