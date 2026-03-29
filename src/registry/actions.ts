@@ -160,6 +160,7 @@ app.view(
 
     await handleConfirmEditChoices({
       private_metadata: payload.private_metadata,
+      user: body.user.id,
     })
   },
 )

@@ -23,6 +23,7 @@ CREATE INDEX polls_creator_created ON polls (creator_user_id, created_at);
 CREATE TABLE poll_choices (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     poll_id INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+    creator_user_id TEXT NOT NULL,
     text TEXT NOT NULL,
     position INTEGER NOT NULL,
 

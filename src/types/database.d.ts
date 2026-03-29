@@ -12,6 +12,7 @@ namespace DB {
   interface PollChoice {
     id: number
     poll_id: number
+    creator_user_id: string
     text: string
     position: number
   }

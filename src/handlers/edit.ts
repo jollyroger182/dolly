@@ -79,10 +79,12 @@ export async function handleConfirmEditPoll(params: ConfirmEditPoll) {
 
 interface ConfirmEditChoices {
   private_metadata: string
+  user: string
 }
 
 export async function handleConfirmEditChoices({
   private_metadata,
+  user,
 }: ConfirmEditChoices) {
   const { id, response_url, changes } = JSON.parse(private_metadata) as {
     id: number
@@ -90,7 +92,7 @@ export async function handleConfirmEditChoices({
     changes: { added: string[]; deleted: number[] }
   }
 
-  await Polls.changeChoices(id, changes.added, changes.deleted)
+  await Polls.changeChoices(id, changes.added, changes.deleted, user)
 
   const poll = await Polls.fetchWithResponses(id)
   if (!poll) return

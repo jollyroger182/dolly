@@ -32,6 +32,7 @@ const Polls = {
         const newPollChoices: Partial<DB.PollChoice>[] = choices.map(
           (text, index) => ({
             poll_id: poll.id,
+            creator_user_id: user,
             text,
             position: index + 1,
           }),
@@ -75,20 +76,22 @@ const Polls = {
     id: number,
     add: string[],
     remove: number[],
+    user: string,
   ): Promise<DB.PollChoice[]> {
     return await sql.begin(async (sql) => {
       if (remove) {
         await sql`DELETE FROM poll_choices WHERE id IN ${sql(remove)}`
       }
 
-      if (add) {
+      if (add.length) {
         const existing = await sql<
           DB.PollChoice[]
         >`SELECT * FROM poll_choices WHERE poll_id = ${id}`
         const maxPosition = Math.max(...existing.map((c) => c.position))
 
-        const newChoices = add.map((c, i) => ({
+        const newChoices = add.map<Partial<DB.PollChoice>>((c, i) => ({
           poll_id: id,
+          creator_user_id: user,
           text: c,
           position: maxPosition + i + 1,
         }))
