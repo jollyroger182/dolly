@@ -1,5 +1,6 @@
 import { sql } from 'bun'
 import Responses from './responses'
+import { sanitizeText } from '../utils'
 
 interface CreatePoll {
   user: string
@@ -23,7 +24,7 @@ const Polls = {
       ...(await sql.begin(async (sql) => {
         const newPoll: Partial<DB.Poll> = {
           creator_user_id: user,
-          question,
+          question: sanitizeText(question),
           anonymous,
           multi_select,
           add_choice_setting,
@@ -36,7 +37,7 @@ const Polls = {
           (text, index) => ({
             poll_id: poll.id,
             creator_user_id: user,
-            text,
+            text: sanitizeText(text),
             position: index + 1,
           }),
         )
@@ -69,7 +70,12 @@ const Polls = {
     return { ...poll, responses }
   },
   async update(poll: Partial<Pick<DB.Poll, 'id' | 'question'>>) {
-    const payload = { ...poll, updated_at: new Date(), id: undefined }
+    const payload: Partial<DB.Poll> = {
+      ...poll,
+      question: sanitizeText(poll.question),
+      updated_at: new Date(),
+      id: undefined,
+    }
     const [updated] = await sql<
       DB.Poll[]
     >`UPDATE polls SET ${sql(payload)} WHERE id = ${poll.id} RETURNING *`
@@ -82,7 +88,7 @@ const Polls = {
     try {
       const [newChoice] = await sql<
         [DB.PollChoice]
-      >`INSERT INTO poll_choices(poll_id, creator_user_id, text, position) SELECT ${id}, ${creator_user_id}, ${text}, COALESCE(MAX(position), 0) + 1 FROM poll_choices WHERE poll_id = ${id} RETURNING *`
+      >`INSERT INTO poll_choices(poll_id, creator_user_id, text, position) SELECT ${id}, ${creator_user_id}, ${sanitizeText(text)}, COALESCE(MAX(position), 0) + 1 FROM poll_choices WHERE poll_id = ${id} RETURNING *`
       return newChoice
     } catch (e) {
       console.error(e)
