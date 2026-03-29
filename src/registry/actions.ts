@@ -1,4 +1,3 @@
-import { Cache } from '../cache'
 import { ACTION_ID, BLOCK_ID, CALLBACK_ID, VALUE } from '../consts'
 import {
   handleClearResponses,
@@ -13,8 +12,6 @@ import {
   handleEditPoll,
 } from '../handlers/edit'
 import { showErrorModal, unique } from '../utils'
-
-const responseUrlCache = new Cache<string, string>()
 
 app.view(
   CALLBACK_ID.createPollModal,
@@ -106,24 +103,24 @@ app.action(
     if (!poll) return
 
     if (poll.creator_user_id !== body.user.id) {
-      // for some reason this doesn't work smh
-      // await respond({
-      //   text: "You cannot edit another user's poll.",
-      //   replace_original: false,
-      //   response_type: 'ephemeral',
-      // })
       await showErrorModal({
         trigger_id: body.trigger_id,
-        error: "You cannot edit another user's poll.",
+        error: 'You are not allowed to perform this action.',
       })
       return
     }
 
-    await handleEditPoll({
-      trigger_id: body.trigger_id,
-      poll,
-      response_url: body.response_url,
-    })
+    const value = payload.selected_option.value
+
+    if (value === VALUE.edit) {
+      await handleEditPoll({
+        trigger_id: body.trigger_id,
+        poll,
+        response_url: body.response_url,
+      })
+    } else if (value === VALUE.delete) {
+      await respond({ delete_original: true })
+    }
   },
 )
 

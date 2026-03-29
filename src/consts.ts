@@ -27,4 +27,5 @@ export const VALUE = {
   anonymous: 'anonymous',
   multiSelect: 'multi_select',
   edit: 'edit',
+  delete: 'delete',
 }

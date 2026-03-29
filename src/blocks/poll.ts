@@ -42,6 +42,7 @@ export async function generatePollBlocks(
         action_id: JSON.stringify({ poll: poll.id }),
         options: [
           { text: { type: 'plain_text', text: 'Edit' }, value: VALUE.edit },
+          { text: { type: 'plain_text', text: 'Delete' }, value: VALUE.delete },
         ],
       },
     },
